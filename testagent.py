@@ -17,18 +17,57 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from ocf import ResourceAgent
+import ocf
 
 
-class TestAgent(ResourceAgent):
-    def start_action(self):
-        pass
+class TestAgent(ocf.ResourceAgent):
+    """
+    Python-OCF Test Agent
 
-    def stop_action(self):
-        pass
+    The backstore resource manages a Linux-IO (LIO) backing LUN. This LUN
+    can then be exported to an initiator via a number of transports,
+    including iSCSI, FCoE, Fibre Channel, etc...
 
-    def monitor_action(self):
-        pass
+    This resource can be run a a single primitive or as a multistate
+    (master/slave) resource. When used in multistate mode, the resource
+    agent manages ALUA attributes for multipathing.
+    """
+
+    # VERSION = '0.0.1'
+
+    hba_type = ocf.Parameter(
+        unique=False, required=True, content='string',
+        shortdesc='Backing store type', longdesc="""
+This attribute is required when running in multistate mode and ignored
+otherwise. It is a space separated list of hostnames that this resource might
+run on, which is used to generate consistent ALUA port group IDs.
+""")
+
+    frobnicate = ocf.Parameter(
+        shortdesc="Path to frobnicate binary",
+        longdesc="""
+            The full path to the frobnicate program. This must be at
+            least version 1.0 to work correctly, but version 1.2 or
+            above is required to use the superfrobnication
+            capabilities.
+        """)
+
+    @ocf.Action(timeout=20)
+    def start(self):
+        print "starting"
+
+    @ocf.Action(timeout=20)
+    def stop(self):
+        print "stopping"
+
+    @ocf.Action(timeout=20, depth=0, interval=10)
+    @ocf.Action(timeout=20, depth=0, interval=20, role="Slave")
+    @ocf.Action(timeout=20, depth=0, interval=10, role="Master")
+    def monitor(self):
+        print "monitoring"
+        print "hba_type: " + self.hba_type
 
 if __name__ == "__main__":
     TestAgent.main()
+
+# vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4

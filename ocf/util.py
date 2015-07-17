@@ -15,28 +15,27 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-# ocf-binaries ###
 
-# Make sure PATH contains all the usual suspects
-# PATH="$PATH:/sbin:/bin:/usr/sbin:/usr/bin"
+class cached_property(object):
+    """
+    Decorator that converts a method with a single self argument into a
+    property cached on the instance.
 
-# check_binary () {
-#     if ! have_binary "$1"; then
-#     if [ "$OCF_NOT_RUNNING" = 7 ]; then
-#         # Chances are we have a fully setup OCF environment
-#         ocf_log err "Setup problem: couldn't find command: $1"
-#     else
-#         echo "Setup problem: couldn't find command: $1"
-#     fi
-#     exit $OCF_ERR_INSTALLED
-#     fi
-# }
+    Optional ``name`` argument allows you to make cached properties of other
+    methods. (e.g.  url = cached_property(get_absolute_url, name='url') )
+    """
+    # This entire class was obtained from Django (django/util/functional.py),
+    # which is licensed under a 3-clause BSD license.
+    # Copyright (c) Django Software Foundation and individual contributors.
+    def __init__(self, func, name=None):
+        self.func = func
+        self.__doc__ = getattr(func, '__doc__')
+        self.name = name or func.__name__
 
-# have_binary () {
-#     if [ "$OCF_TESTER_FAIL_HAVE_BINARY" = "1" ]; then
-#         false
-#     else
-#     local bin=`echo $1 | sed -e 's/ -.*//'`
-#     test -x "`which $bin 2>/dev/null`"
-#     fi
-# }
+    def __get__(self, instance, type=None):
+        if instance is None:
+            return self
+        res = instance.__dict__[self.name] = self.func(instance)
+        return res
+
+# vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4

@@ -15,14 +15,20 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-all: flake8
+all: flake8 sphinx nosetests
 
 clean:
-	find $(CURDIR) -name .git -prune -o -name \*.pyc -type f -print0 | \
+	./setup.py clean
+	find . -name .git -prune -o -name \*.pyc -type f -print0 | \
 		xargs -0 -r rm
 	rm -f .coverage
-	rm -rf python_ocf.egg-info
+	rm -rf python_ocf.egg-info doc/build
 
 flake8:
-	flake8 --exclude=test $(CURDIR)
+	./setup.py flake8
 
+nosetests:
+	./setup.py nosetests
+
+sphinx:
+	./setup.py build_sphinx
