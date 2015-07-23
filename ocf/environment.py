@@ -218,4 +218,17 @@ class Environment(object):
         """
         return int(self.reskey.get('CRM_meta_master_max', 0)) > 0
 
+    @property
+    def rsctmp(self):
+        """
+        Path to a temporary directory for use by resource agents.
+
+        The system startup sequence (on any LSB compliant Linux distribution)
+        guarantees that this directory is emptied on system startup, so this
+        directory will not contain any stale data after a node reboot.
+
+        Equivalent to ``$HA_RSCTMP`` in shell-based resource agents.
+        """
+        return os.environ.get('HA_RSCTMP', '/var/run/resource-agents')
+
 # vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4
