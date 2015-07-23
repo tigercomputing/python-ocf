@@ -22,7 +22,7 @@ clean:
 	find . -name .git -prune -o -name \*.pyc -type f -print0 | \
 		xargs -0 -r rm
 	rm -f .coverage
-	rm -rf python_ocf.egg-info doc/build
+	rm -rf build dist doc/build python_ocf.egg-info
 
 flake8:
 	./setup.py flake8
