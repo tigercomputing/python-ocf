@@ -162,7 +162,7 @@ class Parameter(object):
                 raise ValueError('parameter cannot both be required and have '
                                  'a default value')
             else:
-                self._validate_coerce(self, default)
+                self._validate_coerce(default)
 
     def contribute_to_class(self, ra, name):
         """
