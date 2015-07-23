@@ -92,6 +92,8 @@ class Parameter(object):
     to the constructor are used to construct the XML metadata returned to the
     CRM in response to a ``meta-data`` query.
 
+    This class is available under the alias :class:`ocf.Parameter`.
+
     :param str shortdesc: One-line description of this parameter. Required.
     :param str longdesc: Multi-line long description of this parameter.
       Required.
@@ -258,6 +260,8 @@ class Action(object):
     ``monitor`` action which may have several different modes of operation,
     such as different ``depth`` or ``role`` values.
 
+    This class is available under the alias :class:`ocf.Action`.
+
     :param str name: Name of this action (see
       :data:`ocf.environment.Environment.action`). Optional; uses the decorated
       function's name if not specified.
@@ -372,12 +376,83 @@ class Action(object):
 
 class ResourceAgent(object):
     """
-    FIXME
+    Base class for OCF Resource Agent implementations.
+
+    Implementors should create a subclass for each resource agent they wish to
+    implement, and follow some guidelines in order to bring up a functioning
+    resource agent script.
+
+    This class is available under the alias :class:`ocf.ResourceAgent`.
+
+    - The class *must* have a docstring. The first line of the docstring is
+      used to populate the ``shortdesc`` in the XML metadata, while the rest
+      makes up the ``longdesc``.
+    - The class *must* declare ``start``, ``stop`` and ``monitor`` actions. The
+      ``meta-data`` action is also required by the OCF specification, but this
+      is implemented in this :class:`ResourceAgent` class.
+    - The script's entry point should call :meth:`ResourceAgent.main` through
+      the :class:`ResourceAgent` sub-class.
+
+    Optionally, the sub-class may:
+
+    - Declare a ``NAME`` attribute. If this isn't declared, the script name is
+      obtained from the environment
+      (:attr:`ocf.environment.Environment.script_name`). This is used to
+      populate the ``name`` attribute of the ``resource-agent`` node in the XML
+      metadata.
+    - Declare a ``VERSION`` attribute. If declared, this should be a string
+      which is used to populate the ``version`` attribute of the
+      ``resource-agent`` node in the XML metadata.
+    - Declare one or more class variables of type :class:`Parameter`, which are
+      used to declare which parameters the resource agent supports/expects from
+      the CRM.
+
+    Usage::
+
+        class MyAgent(ocf.ResourceAgent):
+            \"\"\"
+            My agent short description.
+
+            This agent may be used to control the widget frobnicator.
+            \"\"\"
+            @ocf.Action(timeout=20)
+            def start(self):
+                ...
+
+            @ocf.Action(timeout=60)
+            def stop(self):
+                ...
+
+            @ocf.Action(timeout=20, depth=0, interval=60)
+            def monitor(self):
+                ...
+
+        if __name__ == "__main__":
+            MyAgent.main()
+
+    .. seealso::
+
+       :class:`ocf.ra.Parameter`
+          Documentation on how to declare parameters.
+
+       :class:`ocf.ra.Action`
+          Documentation on how to declare available actions.
     """
     __metaclass__ = ResourceAgentType
 
     @classmethod
     def main(cls):
+        """
+        Main entry point for executing resource agent scripts.
+
+        This simply creates an instance of the resource agent class and invokes
+        :meth:`execute`.
+
+        Usage::
+
+            if __name__ == "__main__":
+                MyAgent.main()
+        """
         cls().execute()
         sys.exit(ocf.OCF_ERR_GENERIC)  # this should never happen
 
@@ -390,13 +465,30 @@ class ResourceAgent(object):
             raise NotImplementedError(
                 ("{cls} is incomplete; it is missing the following required "
                  "actions: {act}").format(
-                     cls=self.__class__,
+                     cls=self.__class__.__name__,
                      act=", ".join(sorted(missing_actions))))
 
     def execute(self):
+        """
+        Controls the execution of the resource agent.
+
+        This method is essentially a dispatcher:
+
+        1. If no :data:`ocf.environment.Environment.action` was provided, print
+           program usage and some help text generated from the agent's
+           docstring, then exit.
+        2. Look up the action method. If it is not defined, print program usage
+           and exit.
+        3. Unless the action is ``meta-data``, validate all passed parameters
+           for validity (e.g. that all required parameters have been passed).
+           If they are not valid, print a suitable error message and exit.
+        4. Call the requested action method.
+        """
         # If we were called without any arguments, print usage and exit
         if ocf.env.action is None:
             self._print_usage()
+            print(self.shortdesc)
+            print(self.longdesc)
             sys.exit(ocf.OCF_ERR_ARGS)
 
         # Lookup the action method by name. If there is no such method, print
@@ -437,8 +529,53 @@ class ResourceAgent(object):
                 print("ERROR: {e.message}".format(e=e), file=sys.stderr)
                 sys.exit(ocf.OCF_ERR_CONFIGURED)
 
+    @property
+    def shortdesc(self):
+        """
+        Obtains the resource agent's short description from the class's
+        docstring.
+        """
+        # We extract the RA's short and long description from the docstring on
+        # the ResourceAgent subclass.
+        doc_lines = self.__class__.__doc__.strip().split("\n")
+
+        # The short description is the first line of the docstring
+        return doc_lines[0]
+
+    @property
+    def longdesc(self):
+        """
+        Obtains the resource agent's long description from the class's
+        docstring.
+        """
+        # We extract the RA's short and long description from the docstring on
+        # the ResourceAgent subclass.
+        doc_lines = self.__class__.__doc__.strip().split("\n")
+
+        # Skip the short description
+        doc_lines.pop(0)
+
+        # The long description is everything that's left
+        return "\n".join(x.strip() for x in doc_lines) + "\n"
+
     @Action(name='meta-data', timeout=5)
     def meta_data(self):
+        """
+        Implementation of the OCF ``meta-data`` action.
+
+        This method builds the XML metadata as defined by the OCF RA
+        specification and as interpreted by Pacemaker. The various elements of
+        the metadata are completed by inspecting:
+
+        - The :data:`ResourceAgent.NAME` attribute if it is present, otherwise
+          falling back to :data:`ocf.environment.Environment.script_name`.
+        - The :data:`ResourceAgent.VERSION` attribute if it is present,
+          otherwise no ``version`` attribute is emitted.
+        - The :data:`longdesc` and :data:`shortdesc` by means of the class's
+          docstring.
+        - The various parameters declared using :class:`ocf.ra.Parameter`.
+        - The various actions declared using :class:`ocf.ra.Action`.
+        """
         try:
             name = self.NAME
         except AttributeError:
@@ -455,21 +592,11 @@ class ResourceAgent(object):
         # API version number; currently 1.0
         etree.SubElement(xra, 'version').text = '1.0'
 
-        # We extract the RA's short and long description from the docstring on
-        # the ResourceAgent subclass.
-        doc_lines = self.__class__.__doc__.strip().split("\n")
-
-        # The short description is the first line of the docstring
-        shortdesc = doc_lines.pop(0)
-
-        # The long description is everything that's left
-        longdesc = "\n".join(x.strip() for x in doc_lines) + "\n"
-
         # Add in the RA description text. We just assume the language will
         # always only be English; to date the author has not seen anything but
         # in a published resource agent script.
-        etree.SubElement(xra, 'longdesc', lang='en').text = longdesc
-        etree.SubElement(xra, 'shortdesc', lang='en').text = shortdesc
+        etree.SubElement(xra, 'longdesc', lang='en').text = self.longdesc
+        etree.SubElement(xra, 'shortdesc', lang='en').text = self.shortdesc
 
         parameters = etree.SubElement(xra, 'parameters')
         for param in self._PARAMETERS.itervalues():
@@ -485,6 +612,14 @@ class ResourceAgent(object):
 
     @Action(name='validate-all', timeout=5)
     def validate_all(self):
+        """
+        Implementation of the OCF ``validate-all`` action.
+
+        This method performs no additional validation above the standard
+        parameter validation performed by :methd:`execute`. This method may be
+        overridden in order to provide a more thorough validation of the given
+        configuration, if required.
+        """
         # Parameters are validated by _validate_parameters(); we have nothing
         # further to do here. Subclasses may override this method (or the whole
         # action if necessary) to do their own additional checks if required.
