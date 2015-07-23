@@ -1,0 +1,152 @@
+#!/usr/bin/python
+
+# This file is part of python-ocf.
+# Copyright (C) 2015  Tiger Computing Ltd. <info@tiger-computing.co.uk>
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+from __future__ import print_function
+
+import ocf
+import os
+import sys
+
+
+class DummyAgent(ocf.ResourceAgent):
+    """
+    Example stateless resource agent
+
+    This is a Dummy Resource Agent. It does absolutely nothing except keep
+    track of whether its running or not. Its purpose in life is for testing and
+    to serve as a template for RA writers.
+
+    NB: Please pay attention to the timeouts specified in the actions defined
+    below. They should be meaningful for the kind of resource the agent
+    manages. They should be the minimum advised timeouts, but they should not /
+    cannot cover *all* possible resource instances. So, try to be neither
+    overly generous nor too stingy, but moderate. The minimum timeouts should
+    never be below 10 seconds.
+
+    This is a Python re-implementation of the ``ocf:heartbeat:Dummy`` resource
+    agent using the *python-ocf* module (:mod:`ocf`).
+    """
+
+    VERSION = '0.10'
+
+    state = ocf.Parameter(
+        unique=True, shortdesc='State file',
+        longdesc='Location to store the resource state in.',
+        default="{tmp}/Dummy-{inst}.state".format(
+            tmp=ocf.env.rsctmp, inst=ocf.env.resource_instance))
+
+    fake = ocf.Parameter(
+        shortdesc='Fake attribute that can be changed to cause a reload',
+        longdesc='Fake attribute that can be changed to cause a reload',
+        default='dummy')
+
+    @ocf.Action()
+    def start(self):
+        ret = self.monitor()
+
+        # Check whether we are already running
+        if ret == ocf.OCF_SUCCESS:
+            return ret
+
+        # Touch our state file
+        with open(self.state, 'a'):
+            os.utime(self.state)
+
+        return ocf.OCF_SUCCESS
+
+    @ocf.Action()
+    def stop(self):
+        ret = self.monitor()
+
+        # If we are "running", remove our state file
+        if ret == ocf.OCF_SUCCESS:
+            os.remove(self.state)
+
+        return ocf.OCF_SUCCESS
+
+    @ocf.Action(timeout=20, depth=0, interval=10)
+    def monitor(self):
+        # Monitor _MUST!_ differentiate correctly between running (SUCCESS),
+        # failed (ERROR) or _cleanly_ stopped (NOT RUNNING). That is THREE
+        # states, not just yes/no.
+
+        # If our state file exists, we are "running"
+        if os.path.isfile(self.state):
+            return ocf.OCF_SUCCESS
+
+        # Something has gone horribly wrong
+        # if False:
+        #     return ocf.OCF_ERR_GENERIC
+
+        return ocf.OCF_NOT_RUNNING
+
+    def validate_all(self):
+        ret = super(DummyAgent, self).validate_all()
+        if ret != ocf.OCF_SUCCESS:
+            return ret
+
+        # Is our state directory writable?
+        state_dir = os.path.dirname(self.state)
+        test_file = os.path.join(state_dir, os.getpid())
+        try:
+            # Try to create a file in the directory
+            with open(test_file, 'a'):
+                os.utime(test_file)
+        except OSError:
+            # If this fails, our arguments are incorrect
+            return ocf.OCF_ERR_ARGS
+        else:
+            # It worked, return success
+            return ocf.OCF_SUCCESS
+        finally:
+            # Clean up the test file on the way out
+            try:
+                os.remove(test_file)
+            except OSError:
+                pass
+
+    @ocf.Action()
+    def reload(self):
+        # FIXME: use HA logging
+        print("Reloading {inst} ...".format(inst=ocf.env.resource_instance),
+              file=sys.stderr)
+        return ocf.OCF_SUCCESS
+
+    @ocf.Action()
+    def migrate_to(self):
+        # FIXME: use HA logging
+        print("Migrating {inst} to {tgt}.".format(
+            inst=ocf.env.resource_instance,
+            tgt=ocf.env.reskey.get('CRM_meta_migrate_target')),
+            file=sys.stderr)
+        return self.stop()
+
+    @ocf.Action()
+    def migrate_from(self):
+        # FIXME: use HA logging
+        print("Migrating {inst} from {src}.".format(
+            inst=ocf.env.resource_instance,
+            src=ocf.env.reskey.get('CRM_meta_migrate_source')),
+            file=sys.stderr)
+        return self.start()
+
+if __name__ == "__main__":
+    DummyAgent.main()
+
+# vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4

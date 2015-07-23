@@ -1,6 +1,7 @@
 Usage Examples
 ==============
 
-testagent
----------
-.. automodule:: testagent
+pydummy
+-------
+.. literalinclude:: ../../pydummy
+   :linenos:
