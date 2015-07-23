@@ -35,13 +35,16 @@ setup(
     author_email='info@tiger-computing.co.uk',
     license='GPL-2+',
     url='https://github.com/tigercomputing/python-ocf/',
+    install_requires=[
+        'lxml',
+    ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
-        'License :: OSI Approved :: GNU General Public License v2 or later '
-            '(GPLv2+)',
+        ('License :: OSI Approved :: GNU General Public License v2 or later '
+         '(GPLv2+)'),
         'Topic :: System :: Clustering',
         'Topic :: System :: Systems Administration',
     ],
