@@ -66,7 +66,7 @@ class DummyAgent(ocf.ResourceAgent):
 
         # Touch our state file
         with open(self.state, 'a'):
-            os.utime(self.state)
+            os.utime(self.state, None)
 
         return ocf.OCF_SUCCESS
 
@@ -107,7 +107,7 @@ class DummyAgent(ocf.ResourceAgent):
         try:
             # Try to create a file in the directory
             with open(test_file, 'a'):
-                os.utime(test_file)
+                os.utime(test_file, None)
         except OSError:
             # If this fails, our arguments are incorrect
             return ocf.OCF_ERR_ARGS
