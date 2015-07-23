@@ -4,7 +4,8 @@
 # Vim swap files
 .*.swp
 
-# Setuptools distribution folder.
+# Setuptools build and distribution folders.
+/build/
 /dist/
 
 # Python egg metadata, regenerated from source files by setuptools.

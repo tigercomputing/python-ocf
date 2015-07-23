@@ -1,4 +1,6 @@
 include COPYING
 include Makefile
+include pydummy
 include README.md
 include setup.cfg
+recursive-include doc/source *
