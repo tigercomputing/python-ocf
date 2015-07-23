@@ -277,6 +277,12 @@ class Action(object):
     :param str role: For ``monitor`` operations on resource agents that can
       support master/slave operation only. Optional.
 
+    .. note::
+
+        The decorated method should take no parameters aside from ``self``, and
+        should return one of the ``OCF_`` exit codes defined in the :mod:`ocf`
+        module.
+
     Usage::
 
         class MyAgent(ocf.ResourceAgent):
@@ -482,7 +488,9 @@ class ResourceAgent(object):
         3. Unless the action is ``meta-data``, validate all passed parameters
            for validity (e.g. that all required parameters have been passed).
            If they are not valid, print a suitable error message and exit.
-        4. Call the requested action method.
+        4. Call the requested action method. Its result is passed to
+           :func:`sys.exit` and should be one of the exit codes defined in
+           :mod:`ocf`.
         """
         # If we were called without any arguments, print usage and exit
         if ocf.env.action is None:
@@ -504,16 +512,15 @@ class ResourceAgent(object):
         # Handle "simple" actions here right away as a short-cut, bypassing the
         # various pre-requisite checks
         if ocf.env.action in ['meta-data']:
-            action.action_method(self)
-            sys.exit(ocf.OCF_SUCCESS)  # this should never happen
+            ret = action.action_method(self)
+            sys.exit(ret)
 
         # Validate all required parameters have been given
         self._validate_parameters()
 
         # Run the requested action
-        action.action_method(self)
-
-        sys.exit(ocf.OCF_ERR_GENERIC)  # this should never happen
+        ret = action.action_method(self)
+        sys.exit(ret)
 
     def _print_usage(self):
         print("Usage: {env.script_name} {{{actions}}}".format(
@@ -623,6 +630,6 @@ class ResourceAgent(object):
         # Parameters are validated by _validate_parameters(); we have nothing
         # further to do here. Subclasses may override this method (or the whole
         # action if necessary) to do their own additional checks if required.
-        sys.exit(ocf.OCF_SUCCESS)
+        return ocf.OCF_SUCCESS
 
 # vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4
