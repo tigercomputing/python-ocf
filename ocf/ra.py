@@ -509,17 +509,18 @@ class ResourceAgent(object):
             self._print_usage()
             sys.exit(ocf.OCF_ERR_UNIMPLEMENTED)
 
-        # Handle "simple" actions here right away as a short-cut, bypassing the
-        # various pre-requisite checks
-        if ocf.env.action in ['meta-data']:
-            ret = action.action_method(self)
-            sys.exit(ret)
+        # Find the actual action method by taking the decorated method's name
+        # and fetching the attribute by the same name. This allows sub-classes
+        # to override action methods without having to decorate them again, and
+        # also returns a bound method rather than a bare function.
+        action_method = getattr(self, action.action_method.__name__)
 
-        # Validate all required parameters have been given
-        self._validate_parameters()
+        # Carry out pre-requisite checks for all actions _except_ meta-data.
+        if ocf.env.action != 'meta-data':
+            self._validate_parameters()
 
         # Run the requested action
-        ret = action.action_method(self)
+        ret = action_method()
         sys.exit(ret)
 
     def _print_usage(self):
