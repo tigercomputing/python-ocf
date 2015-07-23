@@ -616,7 +616,7 @@ class ResourceAgent(object):
         Implementation of the OCF ``validate-all`` action.
 
         This method performs no additional validation above the standard
-        parameter validation performed by :methd:`execute`. This method may be
+        parameter validation performed by :meth:`execute`. This method may be
         overridden in order to provide a more thorough validation of the given
         configuration, if required.
         """
