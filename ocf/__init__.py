@@ -114,6 +114,6 @@ from ocf.ra import ResourceAgent, Parameter, Action  # noqa
 env = ocf.environment.Environment()
 
 # Import our own logging module, which configures logging for us
-import ocf.logging
+import ocf.logging  # noqa
 
 # vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4
