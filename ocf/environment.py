@@ -231,4 +231,81 @@ class Environment(object):
         """
         return os.environ.get('HA_RSCTMP', '/var/run/resource-agents')
 
+    @cached_property
+    def debug(self):
+        """
+        Whether to output log messages at debug log level.
+
+        This value defaults to True but this can be overridden by setting
+        HA_debug=0 in the environment
+        """
+        if os.environ.get('HA_debug') == '0':
+            return False
+        else:
+            return True
+
+    @cached_property
+    def logtag(self):
+        """
+        Tag to prefix log messages with.
+
+        This is constructed by combining the script name, resource instance and
+        process ID. It can be overridden by setting the HA_LOGTAG environment
+        variable.
+        """
+        value = os.environ.get('HA_LOGTAG')
+        if value is not None:
+            return value
+
+        return "{name}({instance})[{pid}]".format(
+            name=self.script_name,
+            instance=self.resource_instance,
+            pid=os.getpid())
+
+    @property
+    def log_facility(self):
+        """
+        Syslog facility to use when sending messages to syslog.
+
+        Defaults to 'user'. Extraced from the HA_LOGFACILITY environment
+        variable. A value of 'none' results in a ``None`` value.
+        """
+        value = os.environ.get('HA_LOGFACILITY', 'user')
+        if value == 'none':
+            return None
+        else:
+            return value
+
+    @property
+    def use_logd(self):
+        """
+        Whether to use ha_logger to output log messages.
+
+        Returns True if HA_LOGD=yes is set in the environment, else returns
+        False.
+        """
+        return os.environ.get('HA_LOGD') == 'yes'
+
+    @property
+    def logfile(self):
+        """
+        Path to an additional log file.
+
+        Returns the value of the ``HA_LOGFILE`` environment variable or None.
+        """
+        return os.environ.get('HA_LOGFILE')
+
+    @property
+    def debuglog(self):
+        """
+        Path to a log file for debug messages.
+
+        Returns the value of the ``HA_DEBUGLOG`` environment variable. If the
+        variable is not set or its value is ``/dev/null``, returns ``None``.
+        """
+        log = os.environ.get('HA_DEBUGLOG')
+        if log == '/dev/null':
+            log = None
+        return log
+
 # vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4
