@@ -504,8 +504,8 @@ class ResourceAgent(object):
         try:
             action = self._ACTIONS[ocf.env.action]
         except KeyError:
-            print("{action}: action not supported".format(
-                action=ocf.env.action), file=sys.stderr)  # FIXME: use HA log
+            ocf.log.error("{action}: action not supported".format(
+                action=ocf.env.action))
             self._print_usage()
             sys.exit(ocf.OCF_ERR_UNIMPLEMENTED)
 
@@ -533,8 +533,7 @@ class ResourceAgent(object):
             try:
                 p.validate()
             except ValueError as e:
-                # FIXME: use HA logging
-                print("ERROR: {e.message}".format(e=e), file=sys.stderr)
+                ocf.log.error(e.message)
                 sys.exit(ocf.OCF_ERR_CONFIGURED)
 
     @property

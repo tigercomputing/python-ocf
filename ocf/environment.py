@@ -15,8 +15,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from __future__ import print_function
-
 import ocf
 import os
 import sys
@@ -137,8 +135,7 @@ class Environment(object):
         if os.environ.get('OCF_RA_VERSION_MAJOR') is None:
             return 'default'
 
-        print('ERROR: Need to tell us our resource instance name.',
-              file=sys.stderr)  # FIXME: use HA logging stuff
+        ocf.log.error('Need to tell us our resource instance name.')
         sys.exit(ocf.OCF_ERR_ARGS)
 
     @cached_property
