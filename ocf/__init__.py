@@ -42,6 +42,10 @@ In addition to the members declared below, the following aliases are available:
    Alias for :class:`ocf.ra.Action`.
 """
 
+from __future__ import absolute_import
+
+import logging
+
 from ocf.version import __version__  # noqa
 
 #: Resource agent exit code: The action completed successfully.
@@ -99,11 +103,17 @@ OCF_RUNNING_MASTER = 8
 #: ``Master`` role.
 OCF_FAILED_MASTER = 9
 
+#: :class:`logging.Logger` instance
+log = logging.getLogger(__name__)
+
 # Import these at the end so that the circular references don't go haywire
 import ocf.environment
 from ocf.ra import ResourceAgent, Parameter, Action  # noqa
 
 #: Singleton instance of :class:`ocf.environment.Environment`.
 env = ocf.environment.Environment()
+
+# Import our own logging module, which configures logging for us
+import ocf.logging
 
 # vi:tw=0:wm=0:nowrap:ai:et:ts=8:softtabstop=4:shiftwidth=4
