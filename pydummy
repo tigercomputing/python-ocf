@@ -58,6 +58,8 @@ class DummyAgent(ocf.ResourceAgent):
 
     @ocf.Action()
     def start(self):
+        ocf.log.debug('Starting...')
+
         ret = self.monitor()
 
         # Check whether we are already running
@@ -72,6 +74,8 @@ class DummyAgent(ocf.ResourceAgent):
 
     @ocf.Action()
     def stop(self):
+        ocf.log.debug('Stopping...')
+
         ret = self.monitor()
 
         # If we are "running", remove our state file
@@ -82,6 +86,8 @@ class DummyAgent(ocf.ResourceAgent):
 
     @ocf.Action(timeout=20, depth=0, interval=10)
     def monitor(self):
+        ocf.log.debug('Monitoring...')
+
         # Monitor _MUST!_ differentiate correctly between running (SUCCESS),
         # failed (ERROR) or _cleanly_ stopped (NOT RUNNING). That is THREE
         # states, not just yes/no.
@@ -97,6 +103,8 @@ class DummyAgent(ocf.ResourceAgent):
         return ocf.OCF_NOT_RUNNING
 
     def validate_all(self):
+        ocf.log.debug('Validating...')
+
         ret = super(DummyAgent, self).validate_all()
         if ret != ocf.OCF_SUCCESS:
             return ret
@@ -123,27 +131,19 @@ class DummyAgent(ocf.ResourceAgent):
 
     @ocf.Action()
     def reload(self):
-        # FIXME: use HA logging
-        print("Reloading {inst} ...".format(inst=ocf.env.resource_instance),
-              file=sys.stderr)
+        ocf.log.info('Reloading...')
         return ocf.OCF_SUCCESS
 
     @ocf.Action()
     def migrate_to(self):
-        # FIXME: use HA logging
-        print("Migrating {inst} to {tgt}.".format(
-            inst=ocf.env.resource_instance,
-            tgt=ocf.env.reskey.get('CRM_meta_migrate_target')),
-            file=sys.stderr)
+        ocf.log.info("Migrating to {tgt}.".format(
+            tgt=ocf.env.reskey.get('CRM_meta_migrate_target')))
         return self.stop()
 
     @ocf.Action()
     def migrate_from(self):
-        # FIXME: use HA logging
-        print("Migrating {inst} from {src}.".format(
-            inst=ocf.env.resource_instance,
-            src=ocf.env.reskey.get('CRM_meta_migrate_source')),
-            file=sys.stderr)
+        ocf.log.info("Migrating from {src}.".format(
+            src=ocf.env.reskey.get('CRM_meta_migrate_source')))
         return self.start()
 
 if __name__ == "__main__":
