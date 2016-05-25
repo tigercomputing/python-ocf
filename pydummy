@@ -108,7 +108,7 @@ class DummyAgent(ocf.ResourceAgent):
 
         # Is our state directory writable?
         state_dir = os.path.dirname(self.state)
-        test_file = os.path.join(state_dir, os.getpid())
+        test_file = os.path.join(state_dir, str(os.getpid()))
         try:
             # Try to create a file in the directory
             with open(test_file, 'a'):
