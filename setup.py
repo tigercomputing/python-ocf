@@ -37,6 +37,7 @@ setup(
     url='https://github.com/tigercomputing/python-ocf/',
     install_requires=[
         'lxml',
+        'six',
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
