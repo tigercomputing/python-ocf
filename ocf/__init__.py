@@ -107,7 +107,7 @@ OCF_FAILED_MASTER = 9
 log = logging.getLogger(__name__)
 
 # Import these at the end so that the circular references don't go haywire
-import ocf.environment
+import ocf.environment  # noqa
 from ocf.ra import ResourceAgent, Parameter, Action  # noqa
 
 #: Singleton instance of :class:`ocf.environment.Environment`.
