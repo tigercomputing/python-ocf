@@ -113,7 +113,8 @@ class DummyAgent(ocf.ResourceAgent):
             # Try to create a file in the directory
             with open(test_file, 'a'):
                 os.utime(test_file, None)
-        except OSError:
+        except OSError as e:
+            ocf.log.debug('OSError while opening test_file', e)
             # If this fails, our arguments are incorrect
             return ocf.OCF_ERR_ARGS
         else:
