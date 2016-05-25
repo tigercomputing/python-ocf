@@ -617,7 +617,8 @@ class ResourceAgent(object):
 
         print(etree.tostring(
             xra, pretty_print=True, xml_declaration=True, encoding='utf-8',
-            doctype='<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">').decode('UTF-8'))
+            doctype='<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">'
+        ).decode('UTF-8'))
 
     @Action(name='validate-all', timeout=5)
     def validate_all(self):
