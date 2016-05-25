@@ -24,6 +24,7 @@ import sys
 from lxml import etree
 from ocf.util import cached_property
 
+import six
 
 class ResourceAgentType(type):
     """
@@ -45,12 +46,12 @@ class ResourceAgentType(type):
         # can be overridden by child classes if required.
         try:
             new_class.add_to_class('_ACTIONS', bases[0]._ACTIONS)
-        except AttributeError:
+        except (IndexError, AttributeError):
             new_class.add_to_class('_ACTIONS', {})
 
         try:
             new_class.add_to_class('_PARAMETERS', bases[0]._PARAMETERS)
-        except AttributeError:
+        except (IndexError, AttributeError):
             new_class.add_to_class('_PARAMETERS', {})
 
         # Re-add all other attributes to the class, optinally using
@@ -380,6 +381,7 @@ class Action(object):
             self.action.append_xml(actions)
 
 
+@six.add_metaclass(ResourceAgentType)
 class ResourceAgent(object):
     """
     Base class for OCF Resource Agent implementations.
@@ -444,7 +446,6 @@ class ResourceAgent(object):
        :class:`ocf.ra.Action`
           Documentation on how to declare available actions.
     """
-    __metaclass__ = ResourceAgentType
 
     @classmethod
     def main(cls):
@@ -529,7 +530,7 @@ class ResourceAgent(object):
             file=sys.stderr)
 
     def _validate_parameters(self):
-        for p in self._PARAMETERS.itervalues():
+        for p in six.itervalues(self._PARAMETERS):
             try:
                 p.validate()
             except ValueError as e:
@@ -606,16 +607,16 @@ class ResourceAgent(object):
         etree.SubElement(xra, 'shortdesc', lang='en').text = self.shortdesc
 
         parameters = etree.SubElement(xra, 'parameters')
-        for param in self._PARAMETERS.itervalues():
+        for param in six.itervalues(self._PARAMETERS):
             param.append_xml(parameters)
 
         actions = etree.SubElement(xra, 'actions')
-        for action in self._ACTIONS.itervalues():
+        for action in six.itervalues(self._ACTIONS):
             action.append_xml(actions)
 
         print(etree.tostring(
             xra, pretty_print=True, xml_declaration=True, encoding='utf-8',
-            doctype='<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">'))
+            doctype='<!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">').decode('UTF-8'))
 
     @Action(name='validate-all', timeout=5)
     def validate_all(self):
