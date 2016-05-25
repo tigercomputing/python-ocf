@@ -26,6 +26,7 @@ from ocf.util import cached_property
 
 import six
 
+
 class ResourceAgentType(type):
     """
     Metaclass that adds special behaviour to :class:`ResourceAgent` classes.
